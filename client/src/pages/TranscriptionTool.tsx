@@ -35,6 +35,21 @@ const TranscriptionTool = () => {
   } = useTranscription({
     onTranscriptionComplete: (text) => {
       setStep(3);
+      
+      // If speaker identification is enabled, process the transcript
+      if (enableSpeakerIdentification && text) {
+        // Identify speakers
+        identifySpeakers(text)
+          .catch(error => {
+            console.error("Speaker identification failed:", error);
+            toast({
+              title: "Speaker identification failed",
+              description: "Showing raw transcript instead",
+              variant: "destructive",
+            });
+          });
+      }
+      
       // Auto-generate summary when transcription is complete
       if (text) {
         generateSummary(text);
@@ -101,14 +116,8 @@ const TranscriptionTool = () => {
     
     setStep(2);
     try {
-      // First transcribe the audio
-      const result = await transcribe(selectedFile);
-      
-      // If speaker identification is enabled, process the transcript
-      if (enableSpeakerIdentification && transcriptionText) {
-        // This will be called after transcription is complete
-        await identifySpeakers(transcriptionText);
-      }
+      // Transcribe the audio - speaker identification is handled in onTranscriptionComplete
+      await transcribe(selectedFile);
     } catch (error) {
       console.error("Transcription process failed:", error);
     }
@@ -166,6 +175,7 @@ const TranscriptionTool = () => {
     setStep(1);
     setSelectedFile(null);
     setFileError("");
+    setEnableSpeakerIdentification(false);
   };
 
   return (
@@ -446,9 +456,34 @@ const TranscriptionTool = () => {
                     
                     <TabsContent value="transcript" className="mt-0">
                       <div className="border border-slate-200 border-t-0 rounded-b-md h-64 overflow-y-auto p-4 bg-white">
-                        <p className="text-sm text-slate-700 whitespace-pre-line">
-                          {transcriptionText}
-                        </p>
+                        {enableSpeakerIdentification && speakerSegments.length > 0 ? (
+                          <div className="space-y-4">
+                            {speakerSegments.map((segment, index) => (
+                              <div key={index} className="mb-2">
+                                <div className="flex items-center mb-1">
+                                  <span className="text-xs font-semibold px-2 py-1 rounded-full bg-primary text-white mr-2">
+                                    {segment.speaker}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-slate-700 whitespace-pre-line pl-2 border-l-2 border-slate-200">
+                                  {segment.text}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-slate-700 whitespace-pre-line">
+                            {transcriptionText}
+                          </p>
+                        )}
+                        
+                        {/* If speaker identification is enabled but still processing */}
+                        {enableSpeakerIdentification && isIdentifying && (
+                          <div className="mt-4 p-2 bg-blue-50 rounded-md flex items-center text-blue-700 text-sm">
+                            <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full mr-2"></div>
+                            <p>Identifying speakers in the transcript...</p>
+                          </div>
+                        )}
                       </div>
                     </TabsContent>
                     
@@ -568,16 +603,16 @@ const TranscriptionTool = () => {
                 <p className="text-sm text-slate-600">Automatically detects and transcribes 50+ languages</p>
               </div>
               <div className="bg-slate-50 rounded-md p-4">
-                <h3 className="text-sm font-medium text-slate-900 mb-1">Large File Support</h3>
-                <p className="text-sm text-slate-600">Handles files up to 100MB with automatic compression</p>
+                <h3 className="text-sm font-medium text-slate-900 mb-1">Speaker Identification</h3>
+                <p className="text-sm text-slate-600">AI-powered detection of different speakers in conversations</p>
               </div>
               <div className="bg-slate-50 rounded-md p-4">
                 <h3 className="text-sm font-medium text-slate-900 mb-1">AI Summary</h3>
                 <p className="text-sm text-slate-600">Automatically generates structured summaries with key points and topics</p>
               </div>
               <div className="bg-slate-50 rounded-md p-4">
-                <h3 className="text-sm font-medium text-slate-900 mb-1">Privacy</h3>
-                <p className="text-sm text-slate-600">Files are processed securely and not stored after transcription</p>
+                <h3 className="text-sm font-medium text-slate-900 mb-1">Large File Support</h3>
+                <p className="text-sm text-slate-600">Handles files up to 100MB with automatic compression</p>
               </div>
             </div>
           </div>
