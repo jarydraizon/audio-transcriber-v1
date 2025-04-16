@@ -26,6 +26,20 @@ export const transcriptionSchema = z.object({
 
 export type Transcription = z.infer<typeof transcriptionSchema>;
 
+// Summary related types and schemas
+export const topicSchema = z.object({
+  topic: z.string(),
+  description: z.string()
+});
+
+export const summarySchema = z.object({
+  keyPoints: z.array(z.string()),
+  topics: z.array(topicSchema),
+  actionItems: z.array(z.string()).optional()
+});
+
+export type Summary = z.infer<typeof summarySchema>;
+
 export const audioFileSchema = z.object({
   filename: z.string(),
   size: z.number(),

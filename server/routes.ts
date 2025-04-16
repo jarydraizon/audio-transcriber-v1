@@ -7,8 +7,9 @@ import path from "path";
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { transcribeAudio } from "./transcription";
+import { generateSummary } from "./summary";
 import { z } from "zod";
-import { transcriptionSchema } from "@shared/schema";
+import { transcriptionSchema, summarySchema } from "@shared/schema";
 
 // Promisify exec for easier async/await usage
 const execAsync = promisify(exec);
@@ -165,6 +166,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Transcription error:", error);
       return res.status(500).json({ message: error.message || "Failed to transcribe audio" });
+    }
+  });
+
+  // API route for generating summaries from transcripts
+  app.post("/api/summarize", async (req, res) => {
+    try {
+      // Validate request body
+      const requestSchema = z.object({
+        text: z.string().min(1, "Transcript text is required")
+      });
+      
+      const { text } = requestSchema.parse(req.body);
+      
+      // Generate the summary
+      const summary = await generateSummary(text);
+      
+      // Validate the response
+      const validatedSummary = summarySchema.parse(summary);
+      
+      // Return the summary
+      return res.status(200).json(validatedSummary);
+    } catch (error: any) {
+      console.error("Summary generation error:", error);
+      
+      // Handle specific OpenAI API errors
+      if (error.response && error.response.status) {
+        const status = error.response.status;
+        const message = error.response.data?.error?.message || "OpenAI API error";
+        return res.status(status).json({ message });
+      }
+      
+      // Handle Zod validation errors
+      if (error.errors) {
+        return res.status(400).json({ message: "Invalid request data", errors: error.errors });
+      }
+      
+      return res.status(500).json({ message: error.message || "Failed to generate summary" });
     }
   });
 
