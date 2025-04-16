@@ -21,6 +21,7 @@ export const transcriptionSchema = z.object({
   text: z.string(),
   duration: z.number().optional(),
   filename: z.string().optional(),
+  wasCompressed: z.boolean().optional(),
 });
 
 export type Transcription = z.infer<typeof transcriptionSchema>;

@@ -20,10 +20,10 @@ export function validateAudioFile(file: File): string | null {
     return "Invalid file type. Please upload an MP3, WAV, or M4A file.";
   }
   
-  // Check file size (25MB max - OpenAI Whisper API limit)
-  const maxSize = 25 * 1024 * 1024; // 25MB in bytes
+  // Check file size (100MB max)
+  const maxSize = 100 * 1024 * 1024; // 100MB in bytes
   if (file.size > maxSize) {
-    return "File size exceeds the 25MB limit (OpenAI Whisper API restriction).";
+    return "File size exceeds the 100MB limit. Please upload a smaller file.";
   }
   
   return null;

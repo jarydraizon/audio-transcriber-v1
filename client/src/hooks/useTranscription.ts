@@ -12,6 +12,7 @@ export default function useTranscription(options?: UseTranscriptionOptions) {
   const [transcriptionText, setTranscriptionText] = useState<string>("");
   const [transcriptionError, setTranscriptionError] = useState<string>("");
   const [transcriptionProgress, setTranscriptionProgress] = useState<number>(0);
+  const [wasCompressed, setWasCompressed] = useState<boolean>(false);
   const { toast } = useToast();
 
   const transcriptionMutation = useMutation({
@@ -37,6 +38,15 @@ export default function useTranscription(options?: UseTranscriptionOptions) {
     },
     onSuccess: (data) => {
       setTranscriptionText(data.text);
+      // Check if the audio was compressed
+      if (data.wasCompressed) {
+        setWasCompressed(true);
+        toast({
+          title: "Audio compressed",
+          description: "Your audio file was automatically compressed for better processing.",
+          duration: 5000,
+        });
+      }
       if (options?.onTranscriptionComplete) {
         options.onTranscriptionComplete();
       }
