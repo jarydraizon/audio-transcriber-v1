@@ -394,15 +394,13 @@ const TranscriptionTool = () => {
                 {processingPhase === "identifying" ? (
                   <div className="relative h-2.5 w-full bg-slate-200 rounded-full overflow-hidden">
                     <div className="absolute inset-0 bg-primary/30 animate-pulse rounded-full"></div>
-                    <div className="absolute h-full w-1/4 bg-primary rounded-full animate-[indeterminate_1.5s_ease-in-out_infinite]" 
-                         style={{ 
-                           left: '-25%',
-                           animation: 'indeterminate 1.5s ease-in-out infinite',
-                           '@keyframes indeterminate': {
-                             '0%': { left: '-25%' },
-                             '100%': { left: '100%' }
-                           }
-                         }}></div>
+                    <div 
+                      className="absolute h-full w-1/4 bg-primary rounded-full" 
+                      style={{ 
+                        left: '-25%',
+                        animation: 'indeterminate 1.5s ease-in-out infinite'
+                      }}
+                    ></div>
                   </div>
                 ) : (
                   <Progress value={transcriptionProgress} className="w-full h-2.5" />
