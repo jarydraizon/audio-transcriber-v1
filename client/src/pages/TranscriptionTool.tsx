@@ -4,11 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Mic, Upload, Copy, Download, X, FileAudio, FileText, MessageSquareText } from "lucide-react";
+import { Mic, Upload, Copy, Download, X, FileAudio, FileText, MessageSquareText, Users } from "lucide-react";
 import useTranscription from "@/hooks/useTranscription";
 import useSummary from "@/hooks/useSummary";
+import useSpeakerIdentification from "@/hooks/useSpeakerIdentification";
 import { formatFileSize, validateAudioFile } from "@/lib/fileUtils";
+import { SpeakerSegment } from "@shared/schema";
 
 const TranscriptionTool = () => {
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -44,6 +48,15 @@ const TranscriptionTool = () => {
     summaryError,
     isSummarizing
   } = useSummary();
+  
+  const {
+    identifySpeakers,
+    speakerSegments,
+    identificationError,
+    isIdentifying
+  } = useSpeakerIdentification();
+  
+  const [enableSpeakerIdentification, setEnableSpeakerIdentification] = useState<boolean>(false);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -87,7 +100,18 @@ const TranscriptionTool = () => {
     }
     
     setStep(2);
-    await transcribe(selectedFile);
+    try {
+      // First transcribe the audio
+      const result = await transcribe(selectedFile);
+      
+      // If speaker identification is enabled, process the transcript
+      if (enableSpeakerIdentification && transcriptionText) {
+        // This will be called after transcription is complete
+        await identifySpeakers(transcriptionText);
+      }
+    } catch (error) {
+      console.error("Transcription process failed:", error);
+    }
   };
 
   const copyTranscription = () => {
@@ -272,6 +296,18 @@ const TranscriptionTool = () => {
                   </div>
                 </div>
               )}
+
+              <div className="flex items-center space-x-2 mt-4 mb-4">
+                <Checkbox 
+                  id="speaker-identification" 
+                  checked={enableSpeakerIdentification}
+                  onCheckedChange={(checked) => setEnableSpeakerIdentification(!!checked)}
+                />
+                <Label htmlFor="speaker-identification" className="text-sm text-slate-700 flex items-center cursor-pointer">
+                  <Users className="h-4 w-4 mr-1 text-slate-500" />
+                  Identify different speakers (uses AI to detect speaker changes)
+                </Label>
+              </div>
 
               <div className="flex justify-end">
                 <Button
