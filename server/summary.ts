@@ -20,14 +20,24 @@ export async function generateSummary(transcriptText: string): Promise<{
       messages: [
         {
           role: "system",
-          content: `You are an expert summarizer. Extract key information from transcripts and organize them into a clear, structured format. Be concise but comprehensive.`
+          content: `You are an expert summarizer. Extract key information from transcripts and organize them into a clear, structured format. Be concise but comprehensive. 
+          
+Your response should be formatted in JSON with the following structure:
+{
+  "keyPoints": ["point 1", "point 2", "point 3", "point 4", "point 5"],
+  "topics": [
+    { "topic": "Topic Name 1", "description": "Brief description of topic 1" },
+    { "topic": "Topic Name 2", "description": "Brief description of topic 2" }
+  ],
+  "actionItems": ["action 1", "action 2"] // optional, only if actions are mentioned
+}`
         },
         {
           role: "user",
-          content: `Please analyze this transcript and provide:
-1. Key Points: Bullet list of the 3-5 most important points
-2. Topics Covered: 2-4 main topics with brief descriptions
-3. Action Items: If any action items or next steps are mentioned (if none, omit this section)
+          content: `Please analyze this transcript and provide a JSON summary with:
+1. keyPoints: Array of the 3-5 most important points
+2. topics: Array of 2-4 main topics with topic name and description
+3. actionItems: Optional array of action items or next steps if mentioned
 
 Here's the transcript:
 ${transcriptText}`
