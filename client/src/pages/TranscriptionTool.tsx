@@ -500,11 +500,15 @@ const TranscriptionTool = () => {
                               <div key={index} className="mb-2">
                                 <div className="flex items-center mb-1">
                                   <span className="text-xs font-semibold px-2 py-1 rounded-full bg-primary text-white mr-2">
-                                    {segment.speaker === "speaker" ? "Speaker" : segment.speaker}
+                                    {segment.speaker === "speaker" 
+                                      ? segment.text  // If this is the weird format
+                                      : segment.speaker}
                                   </span>
                                 </div>
                                 <p className="text-sm text-slate-700 whitespace-pre-line pl-2 border-l-2 border-slate-200">
-                                  {segment.text}
+                                  {segment.speaker === "speaker" 
+                                    ? (transcriptionText || "No text available") // If this is the weird format
+                                    : segment.text}
                                 </p>
                               </div>
                             ))}

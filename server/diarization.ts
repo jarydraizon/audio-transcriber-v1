@@ -23,40 +23,41 @@ export async function identifySpeakers(transcriptText: string): Promise<SpeakerS
       messages: [
         {
           role: "system",
-          content: `You are an expert in conversation analysis and speaker diarization. Your task is to analyze a transcript of a conversation and accurately identify different speakers, even when no explicit speaker labels are provided.
+          content: `You are a speaker diarization assistant that analyzes transcripts and identifies different speakers.
 
-IMPORTANT INSTRUCTIONS:
-- Carefully analyze turn-taking patterns, question-answer pairs, and changes in topic or perspective
-- Look for clear indicators of speaker changes like questions followed by answers or shifts in perspective
-- Pay special attention to phrases like "thank you", "could you tell me", or any dialogue markers
-- Label speakers as "Interviewer" and "Interviewee" if it's an interview format
-- Otherwise label speakers as "Speaker 1", "Speaker 2", etc.
-- Be aggressive in detecting speaker changes - conversations almost always have multiple speakers
-- Format each speaker's text as a separate entry in a JSON array
-- Break long monologues into separate entries for the same speaker if they change topics
-- Use conversational context to determine speaker changes (e.g., questions followed by answers)
-- It's critical to separate different speakers properly, even when there are no explicit speaker indicators
-- Never return "Unknown" as the only speaker - make your best effort to identify at least 2 speakers
-
-Your response MUST be formatted as valid JSON with the following structure:
+You MUST return your response ONLY as a JSON array with this structure:
 [
-  { "speaker": "Interviewer", "text": "Question asked by the interviewer..." },
-  { "speaker": "Interviewee", "text": "Response from the interviewee..." },
-  { "speaker": "Interviewer", "text": "Follow-up question..." }
-]`
+  {"speaker": "Speaker 1", "text": "First speaker segment text"},
+  {"speaker": "Speaker 2", "text": "Second speaker segment text"}
+]
+
+Important rules:
+1. Be aggressive in detecting speaker changes
+2. This is definitely a multi-person conversation with at least 2 speakers
+3. DO NOT return a single object - your output MUST be an ARRAY
+4. Use "Speaker 1", "Speaker 2" (or "Interviewer"/"Candidate" if obvious) as names
+5. Divide the text into clear segments by speaker
+6. Never return just one speaker
+
+Analyze turn-taking patterns, question-answer pairs, and changes in topic or perspective.
+Break long monologues into separate entries for the same speaker if they change topics.
+Return at least 2 different speakers, even if you have to guess speaker changes.`
         },
         {
           role: "user",
-          content: `Please analyze this conversation transcript and identify all the different speakers. The transcript doesn't have explicit speaker labels, so infer the speaker changes from context, turn-taking patterns, and content.
+          content: `Below is a transcript from a conversation with AT LEAST 2 different speakers. Identify who says what by analyzing patterns like questions/answers and topic shifts.
 
-Your response MUST be a JSON ARRAY (not an object) with each element having "speaker" and "text" fields.
-For example:
+Format your response EXACTLY like this with NO EXTRA TEXT:
 [
-  {"speaker": "Interviewer", "text": "Tell me about your experience."},
-  {"speaker": "Candidate", "text": "I have worked for 5 years in..."}
+  {"speaker": "Speaker 1", "text": "What they said"},
+  {"speaker": "Speaker 2", "text": "The response"}
 ]
 
-Be aggressive in identifying different speakers - this is definitely a multi-person conversation with at least 2 speakers.
+IMPORTANT: 
+- Return JSON ARRAY with multiple speakers (minimum 2)
+- MUST include at least one segment for each speaker
+- Split long monologues if topics change
+- If it's clearly an interview, use "Interviewer" and "Interviewee" as names
 
 Transcript:
 ${transcriptText}`
@@ -101,9 +102,17 @@ ${transcriptText}`
         console.warn("Unexpected response format from diarization, attempting to parse:", result);
         // Try to convert object to array if needed
         if (typeof result === 'object') {
+          // Try to extract meaningful segments
           const segments = Object.entries(result).map(([key, val]) => {
+            // If this is a single speaker object format
+            if (key === 'speaker' && 'text' in result) {
+              return { 
+                speaker: val as string, 
+                text: result.text as string 
+              };
+            }
             // If key looks like 'speaker1', 'speaker2', etc.
-            if (key.toLowerCase().includes('speaker') && typeof val === 'string') {
+            else if (key.toLowerCase().includes('speaker') && typeof val === 'string') {
               return { speaker: key, text: val as string };
             }
             return null;
