@@ -26,7 +26,7 @@ const upload = multer({
     },
   }),
   limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB
+    fileSize: 25 * 1024 * 1024, // 25MB (OpenAI Whisper API limit)
   },
   fileFilter: (req, file, cb) => {
     // Accept only audio files
