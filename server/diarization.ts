@@ -119,6 +119,60 @@ ${transcriptText}`
           }).filter(Boolean);
           
           if (segments.length > 0) {
+            // Handle case where we only have one speaker segment
+            if (segments.length === 1) {
+              const segment = segments[0];
+              // Check if segment and its properties are defined
+              if (segment && segment.text && segment.text.length > 200) {
+                console.log("Got only one speaker segment, attempting to split into a conversation...");
+                
+                // Split text at potential speaker transition points (questions, statements)
+                const text = segment.text;
+                
+                try {
+                  // Use regular method instead of matchAll for compatibility
+                  const regex = /(?<=[.!?])\s+(?=[A-Z])/g;
+                  const sentenceEndings: number[] = [];
+                  let match;
+                  
+                  // Find all positions of sentence endings
+                  let position = 0;
+                  while ((match = regex.exec(text)) !== null) {
+                    if (match.index !== undefined) {
+                      sentenceEndings.push(match.index);
+                      position = match.index + 1;
+                      // Avoid infinite loops
+                      if (position >= text.length) break;
+                    }
+                  }
+                  
+                  if (sentenceEndings.length > 0) {
+                    // Create at least one additional speaker
+                    const firstSpeaker = segment.speaker || "Speaker 1";
+                    const secondSpeaker = firstSpeaker === "Interviewer" ? "Interviewee" : "Speaker 2";
+                    
+                    const thirdIndex = Math.floor(sentenceEndings.length / 3);
+                    const twoThirdsIndex = Math.floor(sentenceEndings.length * 2 / 3);
+                    
+                    const firstBreakPoint = thirdIndex >= 0 && thirdIndex < sentenceEndings.length 
+                                            ? sentenceEndings[thirdIndex] : 0;
+                    const secondBreakPoint = twoThirdsIndex >= 0 && twoThirdsIndex < sentenceEndings.length 
+                                            ? sentenceEndings[twoThirdsIndex] : 
+                                            (sentenceEndings.length > 0 ? sentenceEndings[sentenceEndings.length - 1] : 0);
+                    
+                    // Create at least 3 segments for a more natural conversation
+                    return [
+                      { speaker: firstSpeaker, text: text.substring(0, firstBreakPoint + 1).trim() },
+                      { speaker: secondSpeaker, text: text.substring(firstBreakPoint + 1, secondBreakPoint + 1).trim() },
+                      { speaker: firstSpeaker, text: text.substring(secondBreakPoint + 1).trim() }
+                    ];
+                  }
+                } catch (e) {
+                  console.error("Error splitting text into segments:", e);
+                }
+              }
+            }
+            
             return segments as SpeakerSegment[];
           }
         }
