@@ -20,10 +20,10 @@ export function validateAudioFile(file: File): string | null {
     return "Invalid file type. Please upload an MP3, WAV, or M4A file.";
   }
   
-  // Check file size (25MB max)
-  const maxSize = 25 * 1024 * 1024; // 25MB in bytes
+  // Check file size (50MB max)
+  const maxSize = 50 * 1024 * 1024; // 50MB in bytes
   if (file.size > maxSize) {
-    return "File size exceeds the 25MB limit.";
+    return "File size exceeds the 50MB limit.";
   }
   
   return null;

@@ -206,7 +206,7 @@ const TranscriptionTool = () => {
                   Drag and drop your audio file, or click to browse
                 </p>
                 <p className="text-xs text-slate-500">
-                  Supports MP3, WAV, M4A (Max 25MB)
+                  Supports MP3, WAV, M4A (Max 50MB)
                 </p>
                 <input
                   ref={fileInputRef}
@@ -370,7 +370,7 @@ const TranscriptionTool = () => {
             <h2 className="text-lg font-medium text-slate-900">About this tool</h2>
           </div>
           <div className="px-6 py-5 text-sm text-slate-700">
-            <p>This audio transcription tool uses OpenAI's Whisper API to convert spoken language in audio files to text. It supports common audio formats including MP3, WAV, and M4A with a maximum file size of 25MB.</p>
+            <p>This audio transcription tool uses OpenAI's Whisper API to convert spoken language in audio files to text. It supports common audio formats including MP3, WAV, and M4A with a maximum file size of 50MB.</p>
             <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="bg-slate-50 rounded-md p-4">
                 <h3 className="text-sm font-medium text-slate-900 mb-1">Supported Languages</h3>
