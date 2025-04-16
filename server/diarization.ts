@@ -74,7 +74,7 @@ ${transcriptText}`
         // Ensure we have at least two speakers
         if (result.length === 1) {
           // Split the content to create at least two speakers
-          const segments = result[0].text.split(/(?<=\.|\?|\!)\s+/g).filter(s => s.trim().length > 0);
+          const segments = result[0].text.split(/(?<=\.|\?|\!)\s+/g).filter((s: string) => s.trim().length > 0);
           if (segments.length > 1) {
             const firstHalf = segments.slice(0, Math.ceil(segments.length/2)).join(" ");
             const secondHalf = segments.slice(Math.ceil(segments.length/2)).join(" ");
@@ -123,7 +123,7 @@ ${transcriptText}`
     } catch (parseError) {
       console.error("Failed to parse diarization response:", parseError);
       // As a fallback, create segments by splitting at sentence boundaries
-      const sentences = transcriptText.split(/(?<=\.|\?|\!)\s+/g).filter(s => s.trim().length > 0);
+      const sentences = transcriptText.split(/(?<=\.|\?|\!)\s+/g).filter((s: string) => s.trim().length > 0);
       
       if (sentences.length <= 2) {
         return [{ speaker: "Speaker 1", text: transcriptText }];

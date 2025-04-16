@@ -25,6 +25,8 @@ const TranscriptionTool = () => {
 
   const [activeTab, setActiveTab] = useState<"transcript" | "summary">("transcript");
   
+  const [processingPhase, setProcessingPhase] = useState<string>("transcribing"); // "transcribing", "identifying", "complete"
+  
   const { 
     transcribe, 
     transcriptionText, 
@@ -34,12 +36,15 @@ const TranscriptionTool = () => {
     isTranscribing 
   } = useTranscription({
     onTranscriptionComplete: (text) => {
-      setStep(3);
-      
-      // If speaker identification is enabled, process the transcript
+      // If speaker identification is enabled, don't move to step 3 yet
       if (enableSpeakerIdentification && text) {
-        // Identify speakers
+        setProcessingPhase("identifying");
+        // Process the transcript with speaker identification before showing results
         identifySpeakers(text)
+          .then(() => {
+            setStep(3); // Move to results after speaker identification is complete
+            setProcessingPhase("complete");
+          })
           .catch(error => {
             console.error("Speaker identification failed:", error);
             toast({
@@ -47,7 +52,13 @@ const TranscriptionTool = () => {
               description: "Showing raw transcript instead",
               variant: "destructive",
             });
+            setStep(3); // Still move to results, but without speaker identification
+            setProcessingPhase("complete");
           });
+      } else {
+        // If speaker identification is not enabled, go straight to results
+        setStep(3);
+        setProcessingPhase("complete");
       }
       
       // Auto-generate summary when transcription is complete
@@ -357,16 +368,45 @@ const TranscriptionTool = () => {
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                 </div>
-                <h3 className="text-lg font-medium text-slate-900">Transcribing your audio</h3>
-                <p className="mt-1 text-sm text-slate-500">This may take a few minutes depending on the file size.</p>
+                <h3 className="text-lg font-medium text-slate-900">
+                  {processingPhase === "identifying" 
+                    ? "Identifying speakers" 
+                    : "Transcribing your audio"}
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  {processingPhase === "identifying"
+                    ? "AI is analyzing the conversation to detect different speakers..."
+                    : "This may take a few minutes depending on the file size."}
+                </p>
               </div>
 
               <div className="bg-slate-50 rounded-md p-4">
                 <div className="mb-2 flex justify-between items-center">
-                  <p className="text-sm font-medium text-slate-700">Processing progress</p>
-                  <p className="text-sm font-medium text-slate-900">{`${Math.round(transcriptionProgress)}%`}</p>
+                  <p className="text-sm font-medium text-slate-700">
+                    {processingPhase === "identifying" ? "Speaker identification" : "Transcription progress"}
+                  </p>
+                  <p className="text-sm font-medium text-slate-900">
+                    {processingPhase === "identifying" 
+                      ? "Processing..." 
+                      : `${Math.round(transcriptionProgress)}%`}
+                  </p>
                 </div>
-                <Progress value={transcriptionProgress} className="w-full h-2.5" />
+                {processingPhase === "identifying" ? (
+                  <div className="relative h-2.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                    <div className="absolute inset-0 bg-primary/30 animate-pulse rounded-full"></div>
+                    <div className="absolute h-full w-1/4 bg-primary rounded-full animate-[indeterminate_1.5s_ease-in-out_infinite]" 
+                         style={{ 
+                           left: '-25%',
+                           animation: 'indeterminate 1.5s ease-in-out infinite',
+                           '@keyframes indeterminate': {
+                             '0%': { left: '-25%' },
+                             '100%': { left: '100%' }
+                           }
+                         }}></div>
+                  </div>
+                ) : (
+                  <Progress value={transcriptionProgress} className="w-full h-2.5" />
+                )}
               </div>
             </div>
           )}
