@@ -494,13 +494,13 @@ const TranscriptionTool = () => {
                     
                     <TabsContent value="transcript" className="mt-0">
                       <div className="border border-slate-200 border-t-0 rounded-b-md h-64 overflow-y-auto p-4 bg-white">
-                        {enableSpeakerIdentification && speakerSegments.length > 0 ? (
+                        {enableSpeakerIdentification && speakerSegments && speakerSegments.length > 0 ? (
                           <div className="space-y-4">
                             {speakerSegments.map((segment, index) => (
                               <div key={index} className="mb-2">
                                 <div className="flex items-center mb-1">
                                   <span className="text-xs font-semibold px-2 py-1 rounded-full bg-primary text-white mr-2">
-                                    {segment.speaker}
+                                    {segment.speaker === "speaker" ? "Speaker" : segment.speaker}
                                   </span>
                                 </div>
                                 <p className="text-sm text-slate-700 whitespace-pre-line pl-2 border-l-2 border-slate-200">
@@ -511,8 +511,20 @@ const TranscriptionTool = () => {
                           </div>
                         ) : (
                           <p className="text-sm text-slate-700 whitespace-pre-line">
-                            {transcriptionText}
+                            {transcriptionText || "No transcription content available."}
                           </p>
+                        )}
+                        
+                        {/* Debug output - Remove in production */}
+                        {enableSpeakerIdentification && speakerSegments && speakerSegments.length > 0 && (
+                          <div className="mt-4 text-xs text-slate-400">
+                            <details>
+                              <summary>Debug Info</summary>
+                              <pre className="mt-2 p-2 bg-slate-50 rounded overflow-auto">
+                                {JSON.stringify(speakerSegments, null, 2)}
+                              </pre>
+                            </details>
+                          </div>
                         )}
                         
                         {/* If speaker identification is enabled but still processing */}

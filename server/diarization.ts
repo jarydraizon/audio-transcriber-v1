@@ -47,10 +47,18 @@ Your response MUST be formatted as valid JSON with the following structure:
         },
         {
           role: "user",
-          content: `Please analyze this conversation transcript and identify all the different speakers. The transcript doesn't have explicit speaker labels, so you need to infer the speaker changes from context, turn-taking patterns, and content. 
+          content: `Please analyze this conversation transcript and identify all the different speakers. The transcript doesn't have explicit speaker labels, so infer the speaker changes from context, turn-taking patterns, and content.
 
-Separate each speaker's segments and format the result as a JSON array as specified. Remember to be aggressive in identifying different speakers - this is definitely a multi-person conversation:
+Your response MUST be a JSON ARRAY (not an object) with each element having "speaker" and "text" fields.
+For example:
+[
+  {"speaker": "Interviewer", "text": "Tell me about your experience."},
+  {"speaker": "Candidate", "text": "I have worked for 5 years in..."}
+]
 
+Be aggressive in identifying different speakers - this is definitely a multi-person conversation with at least 2 speakers.
+
+Transcript:
 ${transcriptText}`
         }
       ],
