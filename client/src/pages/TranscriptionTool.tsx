@@ -21,7 +21,8 @@ const TranscriptionTool = () => {
     transcribe, 
     transcriptionText, 
     transcriptionError, 
-    transcriptionProgress, 
+    transcriptionProgress,
+    wasCompressed,
     isTranscribing 
   } = useTranscription({
     onTranscriptionComplete: () => {
@@ -206,7 +207,7 @@ const TranscriptionTool = () => {
                   Drag and drop your audio file, or click to browse
                 </p>
                 <p className="text-xs text-slate-500">
-                  Supports MP3, WAV, M4A (Max 25MB - OpenAI API limit)
+                  Supports MP3, WAV, M4A (Max 100MB - large files automatically compressed)
                 </p>
                 <input
                   ref={fileInputRef}
@@ -351,7 +352,17 @@ const TranscriptionTool = () => {
                       </Button>
                     </div>
                   </div>
-                  <div className="border border-t-0 border-slate-200 rounded-b-md h-64 overflow-y-auto p-4 bg-white">
+                  
+                  {wasCompressed && (
+                    <div className="bg-blue-50 border border-blue-200 border-t-0 px-4 py-2 text-sm text-blue-700 flex items-center">
+                      <svg className="h-5 w-5 text-blue-400 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      Your audio file was automatically compressed to meet OpenAI's size requirements. This helps process larger files while maintaining speech quality.
+                    </div>
+                  )}
+                  
+                  <div className={`border border-slate-200 ${wasCompressed ? "" : "border-t-0"} rounded-b-md h-64 overflow-y-auto p-4 bg-white`}>
                     <p className="text-sm text-slate-700 whitespace-pre-line">
                       {transcriptionText}
                     </p>
@@ -370,11 +381,15 @@ const TranscriptionTool = () => {
             <h2 className="text-lg font-medium text-slate-900">About this tool</h2>
           </div>
           <div className="px-6 py-5 text-sm text-slate-700">
-            <p>This audio transcription tool uses OpenAI's Whisper API to convert spoken language in audio files to text. It supports common audio formats including MP3, WAV, and M4A with a maximum file size of 25MB (OpenAI API limit).</p>
-            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <p>This audio transcription tool uses OpenAI's Whisper API to convert spoken language in audio files to text. It supports common audio formats including MP3, WAV, and M4A with a maximum file size of 100MB. Files larger than 25MB are automatically compressed to meet OpenAI's API requirements.</p>
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div className="bg-slate-50 rounded-md p-4">
                 <h3 className="text-sm font-medium text-slate-900 mb-1">Supported Languages</h3>
                 <p className="text-sm text-slate-600">Automatically detects and transcribes 50+ languages</p>
+              </div>
+              <div className="bg-slate-50 rounded-md p-4">
+                <h3 className="text-sm font-medium text-slate-900 mb-1">Large File Support</h3>
+                <p className="text-sm text-slate-600">Handles files up to 100MB with automatic compression</p>
               </div>
               <div className="bg-slate-50 rounded-md p-4">
                 <h3 className="text-sm font-medium text-slate-900 mb-1">Privacy</h3>

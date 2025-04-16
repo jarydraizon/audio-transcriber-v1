@@ -94,6 +94,7 @@ export default function useTranscription(options?: UseTranscriptionOptions) {
     transcriptionText,
     transcriptionError,
     transcriptionProgress,
+    wasCompressed,
     isTranscribing: transcriptionMutation.isPending,
   };
 }
