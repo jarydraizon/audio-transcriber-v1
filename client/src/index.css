@@ -2,15 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@keyframes indeterminate {
-  0% {
-    left: -25%;
-  }
-  100% {
-    left: 100%;
-  }
-}
-
 @layer base {
   * {
     @apply border-border;

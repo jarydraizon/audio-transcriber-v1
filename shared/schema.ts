@@ -17,19 +17,11 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
 // Transcription related types and schemas
-export const speakerSegmentSchema = z.object({
-  speaker: z.string(),
-  text: z.string(),
-});
-
-export type SpeakerSegment = z.infer<typeof speakerSegmentSchema>;
-
 export const transcriptionSchema = z.object({
   text: z.string(),
   duration: z.number().optional(),
   filename: z.string().optional(),
   wasCompressed: z.boolean().optional(),
-  speakerSegments: z.array(speakerSegmentSchema).optional(),
 });
 
 export type Transcription = z.infer<typeof transcriptionSchema>;
