@@ -8,8 +8,9 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { transcribeAudio } from "./transcription";
 import { generateSummary } from "./summary";
+import { identifySpeakers } from "./diarization";
 import { z } from "zod";
-import { transcriptionSchema, summarySchema } from "@shared/schema";
+import { transcriptionSchema, summarySchema, speakerSegmentSchema } from "@shared/schema";
 
 // Promisify exec for easier async/await usage
 const execAsync = promisify(exec);
@@ -203,6 +204,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       return res.status(500).json({ message: error.message || "Failed to generate summary" });
+    }
+  });
+
+  // API route for speaker identification in transcripts
+  app.post("/api/identify-speakers", async (req, res) => {
+    try {
+      // Validate request body
+      const requestSchema = z.object({
+        text: z.string().min(1, "Transcript text is required")
+      });
+      
+      const { text } = requestSchema.parse(req.body);
+      
+      // Identify speakers in the transcript
+      const speakerSegments = await identifySpeakers(text);
+      
+      // Validate the response
+      const validatedSegments = z.array(speakerSegmentSchema).parse(speakerSegments);
+      
+      // Return the speaker segments
+      return res.status(200).json(validatedSegments);
+    } catch (error: any) {
+      console.error("Speaker identification error:", error);
+      
+      // Handle specific OpenAI API errors
+      if (error.response && error.response.status) {
+        const status = error.response.status;
+        const message = error.response.data?.error?.message || "OpenAI API error";
+        return res.status(status).json({ message });
+      }
+      
+      // Handle Zod validation errors
+      if (error.errors) {
+        return res.status(400).json({ message: "Invalid request data", errors: error.errors });
+      }
+      
+      return res.status(500).json({ message: error.message || "Failed to identify speakers" });
     }
   });
 
