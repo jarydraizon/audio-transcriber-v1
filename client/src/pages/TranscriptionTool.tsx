@@ -3,9 +3,11 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Mic, Upload, Copy, Download, X, FileAudio } from "lucide-react";
+import { Mic, Upload, Copy, Download, X, FileAudio, FileText, MessageSquareText } from "lucide-react";
 import useTranscription from "@/hooks/useTranscription";
+import useSummary from "@/hooks/useSummary";
 import { formatFileSize, validateAudioFile } from "@/lib/fileUtils";
 
 const TranscriptionTool = () => {
@@ -17,6 +19,8 @@ const TranscriptionTool = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
+  const [activeTab, setActiveTab] = useState<"transcript" | "summary">("transcript");
+  
   const { 
     transcribe, 
     transcriptionText, 
@@ -27,8 +31,19 @@ const TranscriptionTool = () => {
   } = useTranscription({
     onTranscriptionComplete: () => {
       setStep(3);
+      // Auto-generate summary when transcription is complete
+      if (transcriptionText) {
+        generateSummary(transcriptionText);
+      }
     }
   });
+  
+  const {
+    generateSummary,
+    summaryData,
+    summaryError,
+    isSummarizing
+  } = useSummary();
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -331,7 +346,7 @@ const TranscriptionTool = () => {
               {!transcriptionError && (
                 <>
                   <div className="bg-slate-50 p-4 rounded-t-md border border-slate-200 flex justify-between items-center">
-                    <h3 className="text-sm font-medium text-slate-900">Transcription Results</h3>
+                    <h3 className="text-sm font-medium text-slate-900">Results</h3>
                     <div className="flex space-x-2">
                       <Button 
                         onClick={copyTranscription} 
@@ -362,11 +377,101 @@ const TranscriptionTool = () => {
                     </div>
                   )}
                   
-                  <div className={`border border-slate-200 ${wasCompressed ? "" : "border-t-0"} rounded-b-md h-64 overflow-y-auto p-4 bg-white`}>
-                    <p className="text-sm text-slate-700 whitespace-pre-line">
-                      {transcriptionText}
-                    </p>
-                  </div>
+                  <Tabs 
+                    value={activeTab} 
+                    onValueChange={(value) => setActiveTab(value as "transcript" | "summary")}
+                    className="w-full"
+                  >
+                    <TabsList className="w-full border-x border-t border-slate-200 bg-white rounded-none">
+                      <TabsTrigger 
+                        value="transcript" 
+                        className="flex items-center data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-primary"
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        Transcript
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="summary" 
+                        className="flex items-center data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-primary"
+                      >
+                        <MessageSquareText className="h-4 w-4 mr-2" />
+                        Summary
+                        {isSummarizing && (
+                          <span className="ml-2 h-4 w-4 rounded-full border-2 border-t-transparent border-primary animate-spin"></span>
+                        )}
+                      </TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="transcript" className="mt-0">
+                      <div className="border border-slate-200 border-t-0 rounded-b-md h-64 overflow-y-auto p-4 bg-white">
+                        <p className="text-sm text-slate-700 whitespace-pre-line">
+                          {transcriptionText}
+                        </p>
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="summary" className="mt-0">
+                      <div className="border border-slate-200 border-t-0 rounded-b-md h-64 overflow-y-auto p-4 bg-white">
+                        {summaryError && (
+                          <div className="rounded-md bg-red-50 p-3 mb-3">
+                            <div className="flex">
+                              <div className="flex-shrink-0">
+                                <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                </svg>
+                              </div>
+                              <div className="ml-3">
+                                <p className="text-sm text-red-700">{summaryError}</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {isSummarizing && !summaryData && !summaryError && (
+                          <div className="flex flex-col items-center justify-center h-48">
+                            <div className="animate-spin rounded-full h-10 w-10 border-4 border-primary border-t-transparent mb-3"></div>
+                            <p className="text-sm text-slate-700">Generating summary...</p>
+                          </div>
+                        )}
+                        
+                        {summaryData && (
+                          <div className="space-y-4">
+                            <div>
+                              <h4 className="text-sm font-medium text-slate-900 mb-2">Key Points</h4>
+                              <ul className="list-disc pl-5 space-y-1">
+                                {summaryData.keyPoints.map((point, index) => (
+                                  <li key={index} className="text-sm text-slate-700">{point}</li>
+                                ))}
+                              </ul>
+                            </div>
+                            
+                            <div>
+                              <h4 className="text-sm font-medium text-slate-900 mb-2">Topics Covered</h4>
+                              <div className="space-y-2">
+                                {summaryData.topics.map((topic, index) => (
+                                  <div key={index} className="bg-slate-50 p-2 rounded-md">
+                                    <p className="font-medium text-sm text-slate-900">{topic.topic}</p>
+                                    <p className="text-sm text-slate-700">{topic.description}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            
+                            {summaryData.actionItems && summaryData.actionItems.length > 0 && (
+                              <div>
+                                <h4 className="text-sm font-medium text-slate-900 mb-2">Action Items</h4>
+                                <ul className="list-disc pl-5 space-y-1">
+                                  {summaryData.actionItems.map((item, index) => (
+                                    <li key={index} className="text-sm text-slate-700">{item}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </TabsContent>
+                  </Tabs>
                 </>
               )}
             </div>
@@ -382,7 +487,7 @@ const TranscriptionTool = () => {
           </div>
           <div className="px-6 py-5 text-sm text-slate-700">
             <p>This audio transcription tool uses OpenAI's Whisper API to convert spoken language in audio files to text. It supports common audio formats including MP3, WAV, and M4A with a maximum file size of 100MB. Files larger than 25MB are automatically compressed to meet OpenAI's API requirements.</p>
-            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4">
               <div className="bg-slate-50 rounded-md p-4">
                 <h3 className="text-sm font-medium text-slate-900 mb-1">Supported Languages</h3>
                 <p className="text-sm text-slate-600">Automatically detects and transcribes 50+ languages</p>
@@ -390,6 +495,10 @@ const TranscriptionTool = () => {
               <div className="bg-slate-50 rounded-md p-4">
                 <h3 className="text-sm font-medium text-slate-900 mb-1">Large File Support</h3>
                 <p className="text-sm text-slate-600">Handles files up to 100MB with automatic compression</p>
+              </div>
+              <div className="bg-slate-50 rounded-md p-4">
+                <h3 className="text-sm font-medium text-slate-900 mb-1">AI Summary</h3>
+                <p className="text-sm text-slate-600">Automatically generates structured summaries with key points and topics</p>
               </div>
               <div className="bg-slate-50 rounded-md p-4">
                 <h3 className="text-sm font-medium text-slate-900 mb-1">Privacy</h3>
