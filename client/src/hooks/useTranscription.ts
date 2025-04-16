@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Transcription } from "@shared/schema";
 
 interface UseTranscriptionOptions {
-  onTranscriptionComplete?: () => void;
+  onTranscriptionComplete?: (text: string) => void;
 }
 
 export default function useTranscription(options?: UseTranscriptionOptions) {
@@ -48,7 +48,7 @@ export default function useTranscription(options?: UseTranscriptionOptions) {
         });
       }
       if (options?.onTranscriptionComplete) {
-        options.onTranscriptionComplete();
+        options.onTranscriptionComplete(data.text);
       }
     },
     onError: (error: Error) => {
@@ -59,7 +59,7 @@ export default function useTranscription(options?: UseTranscriptionOptions) {
         variant: "destructive",
       });
       if (options?.onTranscriptionComplete) {
-        options.onTranscriptionComplete();
+        options.onTranscriptionComplete(""); // Pass empty string on error
       }
     },
   });

@@ -29,11 +29,11 @@ const TranscriptionTool = () => {
     wasCompressed,
     isTranscribing 
   } = useTranscription({
-    onTranscriptionComplete: () => {
+    onTranscriptionComplete: (text) => {
       setStep(3);
       // Auto-generate summary when transcription is complete
-      if (transcriptionText) {
-        generateSummary(transcriptionText);
+      if (text) {
+        generateSummary(text);
       }
     }
   });
@@ -393,6 +393,12 @@ const TranscriptionTool = () => {
                       <TabsTrigger 
                         value="summary" 
                         className="flex items-center data-[state=active]:bg-white data-[state=active]:border-b-2 data-[state=active]:border-primary"
+                        onClick={() => {
+                          // Trigger summary generation if we don't have a summary yet and we're not already generating one
+                          if (!summaryData && !isSummarizing && transcriptionText) {
+                            generateSummary(transcriptionText);
+                          }
+                        }}
                       >
                         <MessageSquareText className="h-4 w-4 mr-2" />
                         Summary
@@ -434,8 +440,41 @@ const TranscriptionTool = () => {
                           </div>
                         )}
                         
+                        {!isSummarizing && !summaryData && !summaryError && transcriptionText && (
+                          <div className="flex flex-col items-center justify-center h-48">
+                            <p className="text-sm text-slate-700 mb-3">No summary generated yet.</p>
+                            <Button
+                              onClick={() => generateSummary(transcriptionText)}
+                              size="sm"
+                              className="flex items-center"
+                            >
+                              <MessageSquareText className="h-4 w-4 mr-2" />
+                              Generate Summary
+                            </Button>
+                          </div>
+                        )}
+                        
                         {summaryData && (
                           <div className="space-y-4">
+                            <div className="flex justify-end">
+                              <Button
+                                onClick={() => {
+                                  if (transcriptionText) {
+                                    generateSummary(transcriptionText);
+                                  }
+                                }}
+                                variant="outline"
+                                size="sm"
+                                className="mb-2 h-8"
+                                disabled={isSummarizing}
+                              >
+                                <svg className="h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                                </svg>
+                                Regenerate
+                              </Button>
+                            </div>
+                        
                             <div>
                               <h4 className="text-sm font-medium text-slate-900 mb-2">Key Points</h4>
                               <ul className="list-disc pl-5 space-y-1">
